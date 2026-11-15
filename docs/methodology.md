@@ -78,6 +78,30 @@ Two rules stop the formula producing a silly answer:
 The cuts are at the 50th, 75th and 90th percentiles of the composite index,
 matching the empirical distribution of the four input percentiles.
 
+### Hindcast and weight sensitivity
+
+The formula is applied out of sample in two ways, and both are published:
+
+- **Known events.** The five dustiest real days in the sample score **5/5 High
+  or Severe** (4 Severe); the five cleanest score **5/5 Low**.
+- **Held-out seasons.** Train the seasonal percentiles on three seasons and
+  test on the fourth. Clean-decile recall is **65/65**; dusty-decile recall is
+  **24/65 (36.9 %)** at High/Severe. The clean side is strong, the dusty side
+  is modest, and we say so.
+- **NASA cross-check.** Relabelling the held-out 2025/26 season with NASA
+  MERRA-2 AOD gives 2/16 High/Severe in the top decile and 19/19 Low/Moderate
+  in the bottom. CAMS and MERRA-2 AOD correlate at r = 0.644; this is
+  cross-source agreement, not forecast skill.
+- **Weights.** Scaling every weight by ±10 % changes **0 of 605** level
+  labels. Equal weights change 18.5 %; dropping wind and dryness changes
+  19.3 %. The weights are hand-picked, not fitted, and the tests show how much
+  that matters.
+
+Full tables, methods and caveats: [`docs/hindcast.md`](hindcast.md). Raw
+numbers: [`data/hindcast.json`](../data/hindcast.json). This is a **historical
+replay of the index**, not a 3-day-ahead forecast verification; no archived
+forecast runs were available.
+
 ## 2. Flood early warning
 
 Flood is a second hazard over the same three-day window. It uses the rainfall
@@ -140,6 +164,7 @@ the warning panel always shows both hazards for the selected day.
 | Flood + ground node panel | The second hazard and the physical sensor reading side by side |
 | Advice cards | Laundry, market, school, health — concrete actions, not adjectives |
 | Evidence tabs | Live CAMS series, NASA MERRA-2 baseline, satellite imagery |
+| Historical replay | Two real past days (dust and flood), labelled **Not a forecast** |
 | How it works | The formula, weights, cuts and flood thresholds in the page |
 | Subscribe | Demo capture of a phone number; no messages are sent |
 
@@ -167,6 +192,12 @@ separate and always current; it is read from SQLite.
 # Rebuild thresholds from the committed raw sample (no network):
 cd services/api && .venv/bin/python scripts/derive_thresholds.py
 
+# Rebuild the hindcast and sensitivity tables (no network):
+.venv/bin/python scripts/hindcast.py
+
+# Rebuild the two replay events (network required once):
+.venv/bin/python scripts/build_replay.py
+
 # Re-fetch the four seasons (network, ~1–2 min):
 rm ../data/climatology_raw.json && .venv/bin/python scripts/derive_thresholds.py
 
@@ -174,15 +205,28 @@ rm ../data/climatology_raw.json && .venv/bin/python scripts/derive_thresholds.py
 .venv/bin/pytest -q
 ```
 
-`data/thresholds.json` is committed, so the demo is deterministic even if the
-archive hosts are down. The API records `generated_at` and exposes it at
-`/health` and `/api/v1/thresholds`.
+`data/thresholds.json`, `data/replay.json` and `data/hindcast.json` are
+committed, so the demo is deterministic even if the archive hosts are down. The
+API records `generated_at` and exposes it at `/health` and
+`/api/v1/thresholds`.
+
+### Ingest and demo data
+
+`/api/v1/ingest` is the only write endpoint. If `KURA_INGEST_KEY` is unset, it
+accepts local requests only (`127.0.0.1` / `::1`); set a strong key before the
+node posts from another machine or before exposing the API. The subscriber
+form is demo-only: numbers are stored in a git-ignored SQLite file and no
+messages are sent.
 
 ## 7. What this model is not
 
-- Not a machine-learning model. No training/test split, no hidden weights.
+- Not a machine-learning model. No fitted weights and no hidden layers; the
+  held-out-season checks test a fixed rule, not a trained predictor.
 - Not an official NiMet or NEMA forecast. It is a hackathon prototype.
 - Not a hydrological flood model. It is a rainfall-threshold early warning.
 - Not a medical service. Health copy is general guidance.
 - Not calibrated to a Gombe sensor yet. The Arduino node is the start of that
-  calibration; the AERONET check is regional (Ilorin, ~690 km away).
+  calibration; the AERONET check is regional (Ilorin, ~690 km away) and
+  validates MERRA-2, not the live CAMS forecast.
+- Not a verified 3-day forecast. The hindcast applies the index to observed
+  days; it does not measure forecast skill.

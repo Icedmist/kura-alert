@@ -148,7 +148,7 @@ A drawing of the same table is in [`wiring.svg`](wiring.svg).
    - Wi-Fi name and password
    - `API_HOST` = the laptop/server running FastAPI on the same LAN
    - `DEVICE_ID` = e.g. `gombe-market-01`
-   - `API_KEY` = same value as `KURA_INGEST_KEY` (default `demo`)
+   - `API_KEY` = same value as `KURA_INGEST_KEY` on the server
    - `SENSOR_HEIGHT_CM` and `RAIN_MM_PER_TIP`
 5. Select the board and port, then **Upload**.
 6. Open Serial Monitor at **115200 baud**. You should see `POST 200` every five
@@ -188,11 +188,20 @@ power. It stays on and the buzzer chirps while `Water ≥ 25 cm` or
 Test it from a laptop before flashing:
 
 ```bash
+# The API must have a key set, because this request is not from 127.0.0.1
+# when the node is on the LAN. Start the API with:
+#   KURA_INGEST_KEY=demo uvicorn app.main:app --host 0.0.0.0 --port 8000
+
 curl -X POST http://localhost:8000/api/v1/ingest \
   -H 'Content-Type: application/json' \
   -H 'X-Api-Key: demo' \
   -d '{"device_id":"bench-test","pm25":20,"pm10":55,"rain_mm":0,"water_level_cm":4,"temp_c":30,"humidity":25}'
 ```
+
+If `KURA_INGEST_KEY` is unset, `/api/v1/ingest` accepts **local requests
+only** (`127.0.0.1` / `::1`). That keeps a laptop demo working without a key
+while refusing anonymous writes from an exposed deployment. Set a strong key
+before the node posts from another machine or before deploying.
 
 Read it back:
 

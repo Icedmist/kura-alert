@@ -129,3 +129,23 @@ def test_ingest_and_latest_sensor(client: TestClient) -> None:
     latest = client.get("/api/v1/sensors/latest").json()
     assert latest["count"] >= 1
     assert any(d["device_id"] == "test-node" for d in latest["devices"])
+
+
+def test_replay_contains_real_high_states(client: TestClient) -> None:
+    data = client.get("/api/v1/replay").json()
+    assert data["count"] == 2
+    kinds = {event["kind"] for event in data["events"]}
+    assert kinds == {"dust", "flood"}
+
+    dust = next(e for e in data["events"] if e["kind"] == "dust")
+    flood = next(e for e in data["events"] if e["kind"] == "flood")
+    assert dust["day"]["level"] in {"high", "severe"}
+    assert flood["day"]["flood"]["level"] in {"high", "severe"}
+    assert dust["date"] == "2024-02-05"
+    assert flood["day"]["flood"]["rain_24h"] >= 30
+
+
+def test_hindcast_is_available(client: TestClient) -> None:
+    data = client.get("/api/v1/hindcast").json()
+    assert data["holdout"]["pooled"]["clean"]["hit_rate"] == 1.0
+    assert len(data["sensitivity"]["scenarios"]) >= 4

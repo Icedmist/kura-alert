@@ -1,7 +1,7 @@
 # Ƙura Alert — developer shortcuts
 # Usage: make install && make api   (terminal 1), then make web (terminal 2)
 
-.PHONY: help install api web dev test thresholds simulate clean
+.PHONY: help install api web dev test thresholds hindcast replay simulate clean
 
 help:
 	@echo "install      create the venv, install API + web dependencies"
@@ -9,6 +9,8 @@ help:
 	@echo "web          run Next.js on http://127.0.0.1:3000"
 	@echo "test         run the API test suite"
 	@echo "thresholds   regenerate data/thresholds.json from public archives"
+	@echo "hindcast     rebuild data/hindcast.json (held-out seasons, sensitivity)"
+	@echo "replay       rebuild data/replay.json (network required once)"
 	@echo "simulate     post three simulated Arduino readings"
 	@echo "clean        remove build artefacts and local caches"
 
@@ -30,6 +32,12 @@ test:
 
 thresholds:
 	cd services/api && .venv/bin/python scripts/derive_thresholds.py
+
+hindcast:
+	cd services/api && .venv/bin/python scripts/hindcast.py
+
+replay:
+	cd services/api && .venv/bin/python scripts/build_replay.py
 
 simulate:
 	python3 hardware/scripts/simulate_node.py --api http://127.0.0.1:8000 --count 3 --interval 2

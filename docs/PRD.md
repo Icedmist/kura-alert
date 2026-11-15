@@ -58,7 +58,8 @@ to school? Do I cover the stall? Is the drain likely to overflow?*
 
 ### Should ship
 
-- A scenario/demo mode to show High/Severe without waiting for weather.
+- A scenario/demo mode to show High/Severe without waiting for weather —
+  **shipped** as a labelled historical replay of real days.
 - A sensor series chart (API exists; UI currently shows latest only).
 - Swahili/French/other Nigerian languages.
 
@@ -69,7 +70,8 @@ to school? Do I cover the stall? Is the drain likely to overflow?*
 - Official warning authority status or NiMet integration.
 - Hydrological river modelling.
 - User accounts, alerts history, or personalised health advice.
-- A production-grade auth/rate-limit layer for sensor ingestion.
+- A production-grade auth/rate-limit layer for sensor ingestion. The prototype
+  has a shared key plus a local-only default, not a full auth service.
 
 ## 5. Functional requirements
 
@@ -83,9 +85,10 @@ to school? Do I cover the stall? Is the drain likely to overflow?*
 | F6 | Evidence | Live 14-day chart, NASA seasonal chart with lag, satellite layers, validation scatter |
 | F7 | Resilience | API failure falls back to cache, then to bundled JSON; the badge states which |
 | F8 | Subscribe | Phone validation, dedupe, stats; no outbound message |
-| F9 | Sensor ingest | JSON POST with optional key; latest/series endpoints; `sim-` badge |
+| F9 | Sensor ingest | JSON POST; `X-Api-Key` when `KURA_INGEST_KEY` is set, otherwise local requests only; latest/series endpoints; `sim-` badge |
 | F10 | Hardware | Documented BOM, pin map, firmware, simulator, local LCD/buzzer behaviour |
 | F11 | Reproducibility | `make install`, `make api`, `make web`, `make test` work from a clean clone |
+| F12 | Replay and hindcast | `/api/v1/replay` returns real past days labelled not-a-forecast; `/api/v1/hindcast` returns held-out-season and weight-sensitivity tables |
 
 ## 6. Non-functional requirements
 

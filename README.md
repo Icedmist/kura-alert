@@ -7,7 +7,7 @@
 **Know what the dust will do, before you step out.**
 
 A bilingual harmattan dust forecast and flood early warning for **Gombe,
-Nigeria** — built on NASA Earth observation data, with an Arduino ground node
+Nigeria** — built with NASA Earth observation data, with an Arduino ground node
 that measures what the models cannot see.
 
 [![MIT licensed](https://img.shields.io/badge/license-MIT-2c5f46.svg)](LICENSE)
@@ -35,6 +35,10 @@ that measures what the models cannot see.
 | **NASA evidence** | Live CAMS series, MERRA-2 seasonal baseline, GIBS satellite imagery, AERONET validation |
 | **Ground node** | Arduino dust/rain/water-level station with a backlit LCD and local buzzer |
 | **Works offline** | Cached and bundled snapshots; the page still loads if the API or uplink dies |
+| **Historical replay** | Real severe-dust and flood days, clearly labelled, so a calm demo still shows High/Severe |
+
+**Dust is the headline.** Flood early warning and the Arduino node are
+extensions built because the same three-day window decides both.
 
 Built for the **NASA Space Apps Challenge 2026**, Gombe local event (14–15
 November 2026). It is a prototype, not an official forecast service.
@@ -87,7 +91,7 @@ put `KURA_API_URL` in `apps/web/.env.local` when the API is not on
 | --- | --- | --- |
 | `KURA_API_URL` | `http://127.0.0.1:8000` | API base used by Next.js |
 | `KURA_CACHE_TTL` | `1800` | Seconds a live forecast stays cached |
-| `KURA_INGEST_KEY` | unset (open) | Shared key for the Arduino node |
+| `KURA_INGEST_KEY` | unset (local only) | Shared key for the Arduino node; unset allows local requests only |
 | `KURA_DATA_DIR` | `./data` | Thresholds, cache and SQLite location |
 
 ---
@@ -122,12 +126,47 @@ dryness → 21.3/100 → Low`. The full derivation is in
 | **ERA5** via Open-Meteo | Wind, humidity, temperature, rainfall | Hourly |
 | **NASA POWER / MERRA-2** | 605-day climatology, seasonal baseline, cross-check | **77-day lag** (latest 2026-08-30) |
 | **NASA GIBS / Worldview** | True colour, AOD, UV aerosol imagery | 1–2 days |
-| **AERONET Ilorin** | Ground-truth validation | r = **0.865**, n = 30, bias +0.163 AOD |
+| **AERONET Ilorin** | Ground-truth validation of MERRA-2 | r = **0.865**, n = 30, bias +0.163 AOD |
 
-NASA's near-real-time aerosol products need Earthdata and lag by weeks, so live
-conditions come from CAMS and NASA supplies the climatology, imagery and
-validation. The dashboard **shows the lag instead of hiding it**. Full table and
-caveats: [`docs/datasets.md`](docs/datasets.md).
+### Where is NASA in the live number?
+
+**NASA is the baseline and the proof, not the live feed.** The live dust field
+is CAMS because NASA's near-real-time aerosol products need Earthdata and lag by
+weeks; calling a 77-day-old value "today" would be dishonest. NASA MERRA-2
+defines what a normal and a dusty harmattan day look like across 605 days,
+NASA GIBS shows the plume, and AERONET checks the reanalysis. The dashboard
+**shows the lag instead of hiding it**. Full table and caveats:
+[`docs/datasets.md`](docs/datasets.md).
+
+### Hindcast and weight sensitivity
+
+A calm November demo should not hide the model's behaviour. These checks are in
+[`docs/hindcast.md`](docs/hindcast.md); the JSON is at
+[`data/hindcast.json`](data/hindcast.json).
+
+| Check | Result |
+| --- | --- |
+| The five dustiest real days (2,354 → 1,902 µg/m³) | **5/5 High or Severe** (4 Severe) |
+| The five cleanest real days (0 → 33 µg/m³) | **5/5 Low** |
+| Cleanest decile across held-out seasons | **65/65 Low or Moderate** |
+| Dustiest decile across held-out seasons | 24/65 High or Severe — modest recall, stated honestly |
+| Weights changed by ±10 % | **0/605 level changes** |
+| Equal weights instead of the fitted weights | 18.5 % of days change level, mostly at boundaries |
+
+This is a **historical replay of the index on observed days, not a forecast
+skill score** — no archived forecast fields were available. The AERONET
+r = 0.865 validates MERRA-2 against a sun photometer; it does **not** validate
+the live CAMS forecast.
+
+### Replay a real event
+
+The dashboard has a **Historical replay** section with two real days:
+
+- **5 Feb 2024** — the dustiest day in the 605-day sample (95.9/100, Severe).
+- **19 Aug 2024** — 38.7 mm in 24 h, a real flash-flood rainfall day (High).
+
+They are scored with the current model, labelled **Not a forecast**, and never
+mixed into `/api/v1/forecast`. Use them when the live day is calm.
 
 ---
 
@@ -217,6 +256,8 @@ Base URL: `http://127.0.0.1:8000`. Interactive docs: `/docs`.
 | `GET` | `/api/v1/evidence` | 14-day live series, NASA seasonal series, cross-check |
 | `GET` | `/api/v1/validation` | AERONET vs MERRA-2: r, n, bias, scatter samples |
 | `GET` | `/api/v1/map` | GIBS WMS layers and Gombe marker |
+| `GET` | `/api/v1/replay` | Two real historical days, labelled for the demo |
+| `GET` | `/api/v1/hindcast` | Held-out-season checks and weight sensitivity |
 | `GET` | `/api/v1/thresholds` | Current climatology summary and level cuts |
 | `POST` | `/api/v1/subscribe` | Demo subscriber capture (phone, language, audience) |
 | `GET` | `/api/v1/stats` | Subscriber totals by language/audience |
@@ -251,15 +292,16 @@ kura-alert/
 │   │   ├── hazards.py        flood scoring and alerts
 │   │   ├── advice.py         bilingual advice and share messages
 │   │   ├── sensors.py        Arduino ingestion (SQLite)
+│   │   ├── replay.py         real historical replay days
 │   │   ├── store.py          subscriber store
 │   │   └── sources/          Open-Meteo, NASA POWER, GIBS, AERONET clients
-│   ├── scripts/              derive_thresholds.py
+│   ├── scripts/              derive_thresholds, hindcast, build_replay
 │   └── tests/                network-free rule/API tests
 ├── hardware/                 BOM, wiring, firmware, simulator
 │   ├── kura_node/            kura_node.ino + config.h
 │   ├── scripts/              simulate_node.py
 │   └── wiring.svg
-├── data/                     thresholds.json, climatology_raw.json (cache/db ignored)
+├── data/                     thresholds, climatology, replay and hindcast (cache/db ignored)
 ├── docs/                     PRD, methodology, datasets, Hausa review, pitch, demo
 ├── assets/                   logo mark, lockup and concepts
 ├── .env.example
@@ -272,17 +314,29 @@ kura-alert/
 ## Tests and reproducibility
 
 ```bash
-make test        # 10 network-free tests: rules, API, store, sensors
+make test        # 12 network-free tests: rules, API, replay, store, sensors
 make thresholds  # rebuild data/thresholds.json from the committed raw sample
+make hindcast    # rebuild data/hindcast.json (held-out seasons + sensitivity)
+make replay      # rebuild data/replay.json (network required once)
 ```
 
 The tests cover percentile monotonicity, the seasonal window, the level cuts,
-flood dry/heavy/severe floors, phone normalisation, subscribe dedupe, ingest
-and latest-sensor reads. They use a temporary SQLite database and never call
-the network.
+flood dry/heavy/severe floors, replay levels, hindcast availability, phone
+normalisation, subscribe dedupe, ingest and latest-sensor reads. They use a
+temporary SQLite database and never call the network.
 
-`data/thresholds.json` and `data/climatology_raw.json` are committed so the
-demo is deterministic. `data/cache/` and `data/kura.db` are local-only.
+`data/thresholds.json`, `data/climatology_raw.json`, `data/replay.json` and
+`data/hindcast.json` are committed so the demo is deterministic. `data/cache/`
+and `data/kura.db` are local-only.
+
+### Hardening the demo
+
+- **Sensor ingest:** if `KURA_INGEST_KEY` is unset, `/api/v1/ingest` only accepts
+  local requests. Set a strong key before exposing the API or deploying a node.
+- **Subscriber data:** the form is demo-only. Numbers go to
+  `data/kura.db`, which is git-ignored; delete that file to erase them. No
+  messages are sent.
+- **No secrets committed:** `.env` is ignored; `.env.example` is safe.
 
 ---
 
@@ -298,6 +352,11 @@ demo is deterministic. `data/cache/` and `data/kura.db` are local-only.
   the start of local ground truth, not a finished network.
 - **Flood is a rainfall threshold, not a hydrological model.** It does not
   predict river discharge or drain capacity.
+- **AERONET validates MERRA-2, not this forecast.** r = 0.865 is a regional
+  data check at Ilorin (~690 km away), not forecast skill.
+- **The weights are hand-picked.** They are transparent, not fitted. A ±10 %
+  change moves no levels in the 605-day sample; larger reweighting moves
+  8–19 % of days. See [`docs/hindcast.md`](docs/hindcast.md).
 - **Hausa copy is pending native-speaker review.** See
   [`docs/hausa-copy.md`](docs/hausa-copy.md); corrections are a small,
   single-file pull request.
@@ -312,6 +371,7 @@ demo is deterministic. `data/cache/` and `data/kura.db` are local-only.
 | --- | --- |
 | [`docs/PRD.md`](docs/PRD.md) | Problem, personas, scope, requirements, risks, metrics |
 | [`docs/methodology.md`](docs/methodology.md) | Formula, percentiles, guardrails, flood rules, worked example |
+| [`docs/hindcast.md`](docs/hindcast.md) | Held-out-season replay, NASA cross-check, weight sensitivity |
 | [`docs/datasets.md`](docs/datasets.md) | Every source, variable, freshness, caveat and licence |
 | [`docs/hausa-copy.md`](docs/hausa-copy.md) | Full Hausa copy with a native-speaker review sheet |
 | [`hardware/README.md`](hardware/README.md) | BOM, pin map, assembly, flashing, calibration, field notes |
@@ -326,7 +386,8 @@ demo is deterministic. `data/cache/` and `data/kura.db` are local-only.
 
 Built at **NASA Space Apps Challenge 2026, Gombe** by the Ƙura Alert team
 (Icedmist). Data: NASA POWER / MERRA-2, NASA GIBS / Worldview, NASA Earthdata,
-AERONET, CAMS and ERA5 via Open-Meteo. Thanks to the Gombe local organisers and
-the traders, teachers and health workers who told us what they actually need.
+AERONET, CAMS and ERA5 via Open-Meteo. Thanks to the Gombe local organisers.
+The user scenarios are informed by public reporting and the team's knowledge of
+Gombe markets; no formal user interviews are claimed.
 
 MIT licensed. See [LICENSE](LICENSE).

@@ -16,6 +16,15 @@ imagery. That trade-off is shown in the UI, not hidden.
 | **AERONET — Ilorin, Nigeria** | Level 1.5 AOD at 500 nm | Ground-truth validation of MERRA-2 | `aeronet.gsfc.nasa.gov`, no key | 2025-01-01 → 2025-01-31 window at build |
 | **MODIS MAIAC / VIIRS Deep Blue** | AOD | Documented validation track, not required for the demo | LAADS DAAC (account) | Cited only |
 
+Derived, committed files:
+
+| File | Contents | Built by |
+| --- | --- | --- |
+| `data/climatology_raw.json` | 605 harmattan days of CAMS/ERA5 daily means | `scripts/derive_thresholds.py` |
+| `data/thresholds.json` | Percentiles, NASA baseline, 2025/26 season | `scripts/derive_thresholds.py` |
+| `data/hindcast.json` | Known events, held-out seasons, NASA cross-check, sensitivity | `scripts/hindcast.py` (no network) |
+| `data/replay.json` | Two real replay days: 5 Feb 2024 dust, 19 Aug 2024 flood | `scripts/build_replay.py` (network once) |
+
 ## Why CAMS for live dust
 
 NASA's near-real-time dust fields (GEOS-CF, MERRA-2 aerosol) need Earthdata
@@ -62,8 +71,26 @@ AERONET Ilorin is the nearest long-record sun-photometer site to Gombe
 | Mean bias (AERONET − MERRA-2) | **+0.163 AOD** | MERRA-2 is slightly low for this window |
 | Wavelength | 500 nm vs 550 nm | Small expected offset from the mismatch |
 
+**This validates MERRA-2, not the live forecast.** It is a regional
+reanalysis check; it does not tell you how often the 3-day CAMS forecast is
+right in Gombe. Do not quote r = 0.865 as forecast accuracy.
+
 The UI shows the scatter plot, the r/n/bias tiles and the caveat. The endpoint
 is `/api/v1/validation`; it caches for 7 days.
+
+## Cross-checks on the index
+
+Two extra checks live in [`docs/hindcast.md`](hindcast.md) and
+`/api/v1/hindcast`:
+
+- **Held-out seasons:** thresholds trained on three harmattan seasons, tested on
+  the fourth. Clean-decile recall 65/65; dusty-decile recall 24/65 (36.9 %).
+- **NASA-labelled cross-check:** the 2025/26 season labelled by MERRA-2 AOD
+  instead of CAMS AOD. Top decile 2/16 High/Severe, bottom decile 19/19
+  Low/Moderate. CAMS and MERRA-2 AOD correlate at r = 0.644, so this is
+  agreement between two models, not independent truth.
+
+Both are **observed-day replays, not forecast verification**.
 
 ## Known data caveats
 
@@ -81,6 +108,11 @@ is `/api/v1/validation`; it caches for 7 days.
    the score is not a hydrological model.
 6. **GIBS availability.** Some layers are delayed or blank for a date. The UI
    has an explicit "satellite image unavailable" state and a Worldview link.
+7. **Replay is not live.** The two replay events are real past days, scored
+   with today's model. They are labelled **Not a forecast** and never enter
+   `/api/v1/forecast`.
+8. **NASA AOD is a model too.** MERRA-2 is a reanalysis, not a sensor. The
+   AERONET comparison is the nearest thing to ground truth in this repo.
 
 ## Licensing and attribution
 

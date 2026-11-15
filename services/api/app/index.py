@@ -151,8 +151,13 @@ def level_for(score: float) -> str:
     return "severe"
 
 
-def score_day(day: dict[str, Any], thresholds: dict[str, Any]) -> dict[str, Any]:
+def score_day(
+    day: dict[str, Any],
+    thresholds: dict[str, Any],
+    weights: dict[str, float] | None = None,
+) -> dict[str, Any]:
     dists = thresholds.get("distributions", DEFAULT_THRESHOLDS["distributions"])
+    active_weights = weights or WEIGHTS
 
     samples = {
         key: seasonal_sample(thresholds, day["date"], key) for key in ("dust", "aod", "wind", "rh")
@@ -180,11 +185,11 @@ def score_day(day: dict[str, Any], thresholds: dict[str, Any]) -> dict[str, Any]
         "dryness": dryness_pct,
     }
     available = {k: v for k, v in parts.items() if v is not None}
-    weight_sum = sum(WEIGHTS[k] for k in available)
+    weight_sum = sum(active_weights[k] for k in available)
     if not weight_sum:
         score = 0.0
     else:
-        score = 100 * sum(WEIGHTS[k] * v for k, v in available.items()) / weight_sum
+        score = 100 * sum(active_weights[k] * v for k, v in available.items()) / weight_sum
 
     guards: list[str] = []
     if dust_pct is not None:
@@ -229,7 +234,7 @@ def score_day(day: dict[str, Any], thresholds: dict[str, Any]) -> dict[str, Any]
                 "value": day.get("dust"),
                 "unit": "µg/m³",
                 "percentile": dust_pct,
-                "weight": WEIGHTS["dust"],
+                "weight": active_weights["dust"],
                 "source": "CAMS via Open-Meteo",
             },
             {
@@ -239,7 +244,7 @@ def score_day(day: dict[str, Any], thresholds: dict[str, Any]) -> dict[str, Any]
                 "value": day.get("aod"),
                 "unit": "AOD 550 nm",
                 "percentile": aod_pct,
-                "weight": WEIGHTS["aod"],
+                "weight": active_weights["aod"],
                 "source": "CAMS via Open-Meteo",
             },
             {
@@ -249,7 +254,7 @@ def score_day(day: dict[str, Any], thresholds: dict[str, Any]) -> dict[str, Any]
                 "value": day.get("wind"),
                 "unit": "km/h",
                 "percentile": wind_pct,
-                "weight": WEIGHTS["wind"],
+                "weight": active_weights["wind"],
                 "source": "ERA5 via Open-Meteo",
             },
             {
@@ -259,7 +264,7 @@ def score_day(day: dict[str, Any], thresholds: dict[str, Any]) -> dict[str, Any]
                 "value": day.get("rh"),
                 "unit": "% humidity",
                 "percentile": dryness_pct,
-                "weight": WEIGHTS["dryness"],
+                "weight": active_weights["dryness"],
                 "source": "ERA5 via Open-Meteo",
             },
         ],

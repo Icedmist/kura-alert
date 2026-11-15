@@ -43,8 +43,9 @@ until the API accepts them, so a dropped POST does not lose rainfall.
 
 **Data contract.** `POST /api/v1/ingest` with `device_id`, `pm25`, `pm10`,
 `dust_ugm3`, `rain_mm`, `water_level_cm`, `temp_c`, `humidity`. A shared
-`X-Api-Key` is optional and controlled by `KURA_INGEST_KEY`. Device ids that
-start with `sim-` are badged **Simulated** in the UI.
+`X-Api-Key` is controlled by `KURA_INGEST_KEY`; if the key is unset, only local
+requests are accepted, so a LAN node needs a key. Device ids that start with
+`sim-` are badged **Simulated** in the UI.
 
 Full bill of materials, pin-by-pin wiring, flashing and calibration:
 [`hardware/README.md`](../hardware/README.md). Diagram:

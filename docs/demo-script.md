@@ -54,28 +54,42 @@ Check:
 
 - Scroll to **Dust and flood, in one window**.
 - Point at the rainfall bars and the 15/30/50 mm legend.
-- Say: "Today is dry, so flood is Low. But the rule has hard floors: 15 mm is a
+- Say: "Dust is the headline. Flood is the second hazard over the same three
+  days. Today is dry, so flood is Low. But the rule has hard floors: 15 mm is a
   watch, 30 is high, 50 is severe. One heavy day cannot hide as low."
 - Point at the ground-node card: dust, rain, water level, temperature,
   humidity, device id and last-reading time.
 
-## 2:45 — Evidence
+## 2:40 — Evidence
 
 - Click the **NASA** tab.
 - Point at the lag badge: **2026-08-30 · 77 days**.
 - Say: "We do not pretend MERRA-2 is today. It gives the seasonal baseline;
   CAMS gives the live field."
 - Point at the validation tiles: **r 0.87, n 30, bias 0.16** and the caveat.
+- Say: "That validates MERRA-2, not the forecast. We label it that way."
 - Click **Satellite**, show the true-colour/AOD layers, then back to **Live**.
 
-## 3:30 — "Show me why"
+## 3:10 — A real severe day
+
+- Scroll to **Historical replay**.
+- Show **5 Feb 2024 — 95.9/100, Severe**, then **19 Aug 2024 — 38.7 mm, High**.
+- Point at the amber **Not a forecast** badge.
+- Say: "November is calm, so we do not fake a storm. These are real past days,
+  scored with today's model, kept separate from the forecast. This is what the
+  app says when it matters."
+
+## 3:40 — "Show me why"
 
 - Scroll to **A formula you can audit**.
 - Read the formula line and the four weights.
 - Point at the level cuts and the flood thresholds.
-- Say: "No hidden model. A judge can recompute this."
+- Say: "No hidden model. A judge can recompute this. On 605 real days, the five
+  dustiest all score High or Severe, the five cleanest all score Low. Hide a
+  season and clean days stay clean 65 out of 65. Dusty-day recall is 24 of 65 —
+  modest, and in the repo. A ten percent weight change moves no levels."
 
-## 4:00 — Hardware
+## 4:10 — Hardware
 
 - Open `hardware/README.md` on screen (or the wiring SVG).
 - Point at the pin table: `D0` PMS TX, `D2` rain, `D3/D4` ultrasonic,
@@ -84,7 +98,7 @@ Check:
   sensor and a backlit LCD. It posts to the same API and warns locally without
   internet."
 
-## 4:30 — Close
+## 4:35 — Close
 
 - Back to the top, Hausa message visible.
 - "Open data, open code, a message a trader can use. Next: native-speaker
@@ -99,11 +113,15 @@ Check:
 | Satellite image is blank | Click another layer or say "GIBS is delayed; here is the Worldview link" and move on. |
 | No sensor reading | Run `make simulate`; the card appears with a **Simulated** badge. |
 | Chart is empty | It is the dry season; that is the correct state. Point at the "No rain recorded" note and the watch line. |
-| A judge asks for High/Severe | Open `docs/methodology.md` and show the score bands and flood floors. There is no live storm today; do not fake it. |
+| A judge asks for High/Severe | Scroll to **Historical replay**. It is a real past day, clearly labelled **Not a forecast**. Do not fake the live day. |
+| A judge asks "how accurate?" | Say the honest split: clean 65/65, dusty 24/65 at High/Severe, and r = 0.865 validates MERRA-2, not the forecast. Full tables in `docs/hindcast.md`. |
+| A judge asks about the weights | Point at the sensitivity table in `docs/hindcast.md`: ±10 % moves 0/605 levels; equal weights move 18.5 %. |
 
 ## Do not
 
 - Do not send a WhatsApp/SMS message from the demo phone.
 - Do not claim official warning status.
+- Do not call the replay "today"; it is a historical day and the badge says so.
+- Do not quote r = 0.865 as forecast accuracy; it validates MERRA-2.
 - Do not give medical advice; read the disclaimer.
 - Do not say the Hausa is perfect.

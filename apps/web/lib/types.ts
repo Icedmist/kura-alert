@@ -203,3 +203,23 @@ export interface SensorLatest {
   count: number;
   note: string;
 }
+
+export interface ReplayEvent {
+  id: string;
+  kind: "dust" | "flood";
+  date: string;
+  title_en: string;
+  title_ha: string;
+  context_en: string;
+  context_ha: string;
+  source: string | null;
+  day: DayForecast;
+}
+
+export interface ReplayData {
+  events: ReplayEvent[];
+  count: number;
+  generated_at: string;
+  note: string;
+  disclaimer: { en: string; ha: string };
+}

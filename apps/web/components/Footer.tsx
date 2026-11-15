@@ -32,10 +32,13 @@ export default function Footer({
               : "A harmattan dust forecast and flood early warning for Gombe, in Hausa and English."}
           </p>
           <p className="mt-3 max-w-sm text-[11px] font-medium text-ink-600">
-            {lang === "ha" ? t.footerNote : t.footerNote}
+            {t.footerNote}
           </p>
           <p className="mt-1 max-w-sm text-[10px] text-ink-400">
             {lang === "ha" ? disclaimer.ha : disclaimer.en}
+          </p>
+          <p className="mt-2 max-w-sm text-[10px] font-medium text-amber-700">
+            {t.hausaReview}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-[11px]">
             <a

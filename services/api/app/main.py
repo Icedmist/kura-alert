@@ -10,9 +10,10 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from . import advice, cache, hazards, index, sensors, store
+from . import advice, cache, hazards, index, replay, sensors, store
 from .config import (
     CACHE_TTL_SECONDS,
+    DATA_DIR,
     EVIDENCE_DAYS,
     FALLBACK_DIR,
     FORECAST_DAYS,
@@ -270,15 +271,43 @@ def map_layers(day: str | None = None) -> dict[str, Any]:
     return gibs.payload(day)
 
 
+@app.get("/api/v1/replay")
+def replay_events() -> dict[str, Any]:
+    """Real historical days, clearly labelled, for demoing high/severe states."""
+    return replay.payload()
+
+
+@app.get("/api/v1/hindcast")
+def hindcast() -> dict[str, Any]:
+    """Held-out-season checks and weight sensitivity, generated offline."""
+    try:
+        return json.loads((DATA_DIR / "hindcast.json").read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=404, detail="hindcast.json not built") from exc
+
+
 @app.post("/api/v1/ingest")
 async def ingest(
     payload: dict[str, Any],
+    request: Request,
     x_api_key: str | None = Header(default=None),
 ) -> dict[str, Any]:
-    """Arduino node endpoint. Set KURA_INGEST_KEY to require a shared key."""
+    """Arduino node endpoint.
+
+    Set KURA_INGEST_KEY to require a shared key. If it is unset, only local
+    requests are accepted, so a laptop demo works without a key but an exposed
+    deployment cannot be written to anonymously.
+    """
     expected = os.getenv("KURA_INGEST_KEY")
-    if expected and x_api_key != expected and payload.get("key") != expected:
-        raise HTTPException(status_code=401, detail="invalid ingest key")
+    client_host = request.client.host if request.client else ""
+    if expected:
+        if x_api_key != expected:
+            raise HTTPException(status_code=401, detail="invalid ingest key")
+    elif client_host not in {"127.0.0.1", "::1", "localhost", "testclient"}:
+        raise HTTPException(
+            status_code=401,
+            detail="KURA_INGEST_KEY must be set for non-local ingest",
+        )
     return sensors.add_reading(payload)
 
 

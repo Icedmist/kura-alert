@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Cpu, Languages, Satellite, Wind } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Cpu, History, Languages, Satellite, Wind } from "lucide-react";
 import AdviceGrid from "@/components/AdviceGrid";
 import DayStrip from "@/components/DayStrip";
 import EvidenceTabs from "@/components/EvidenceTabs";
@@ -11,6 +11,7 @@ import HazardPanel from "@/components/HazardPanel";
 import Header from "@/components/Header";
 import HowItWorks from "@/components/HowItWorks";
 import MessageCard from "@/components/MessageCard";
+import ReplayPanel from "@/components/ReplayPanel";
 import SubscribeForm from "@/components/SubscribeForm";
 import { COPY } from "@/lib/i18n";
 import type {
@@ -18,6 +19,7 @@ import type {
   Forecast,
   Lang,
   MapData,
+  ReplayData,
   SensorLatest,
   SubscriberStats,
   Validation,
@@ -30,6 +32,7 @@ export default function Dashboard({
   map,
   sensors,
   stats,
+  replay,
   degraded,
 }: {
   forecast: Forecast;
@@ -38,6 +41,7 @@ export default function Dashboard({
   map: MapData;
   sensors: SensorLatest;
   stats: SubscriberStats;
+  replay: ReplayData;
   degraded: boolean;
 }) {
   const [lang, setLang] = useState<Lang>("en");
@@ -114,6 +118,13 @@ export default function Dashboard({
             <Chip icon={<Languages className="h-3 w-3" />} label="Hausa + English" />
             <Chip icon={<Satellite className="h-3 w-3" />} label="NASA POWER · GIBS · AERONET" />
             <Chip icon={<Cpu className="h-3 w-3" />} label="Arduino ground node" />
+            <a
+              href="#replay"
+              className="inline-flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-50/70 px-2.5 py-1 font-medium text-amber-800 transition hover:bg-amber-100"
+            >
+              <History className="h-3 w-3" />
+              {lang === "ha" ? "Bayanin tarihi" : "Historical replay"}
+            </a>
           </div>
         </section>
 
@@ -160,6 +171,7 @@ export default function Dashboard({
 
         <div className="mt-10 space-y-10 sm:space-y-12">
           <HazardPanel day={day} days={safeDays} lang={lang} sensors={sensors} />
+          <ReplayPanel replay={replay} lang={lang} />
           <AdviceGrid day={day} lang={lang} />
           <EvidenceTabs evidence={evidence} validation={validation} map={map} lang={lang} />
 

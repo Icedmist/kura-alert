@@ -11,14 +11,17 @@
 > talk — WhatsApp. And in the rainy season, the same drains flood with almost
 > no local warning.
 >
-> We built Ƙura Alert: a three-day dust forecast and flood early warning, in
-> Hausa and English, that fits in a WhatsApp message."
+> We built Ƙura Alert: a three-day dust forecast first, with flood early
+> warning as a second signal over the same window, in Hausa and English, in a
+> message a trader can forward."
 
 *Show the hero: 21/100, Low, the Hausa message.*
 
 ## 0:30–1:15 — What it does
 
-> "One number. One level. One action. Laundry, market, school, health.
+> "One number. One level. One action. Laundry, market, school, health. Dust is
+> the headline; flood is the second hazard because the same three days decide
+> both.
 >
 > Tap WhatsApp and the message is ready in Hausa. Tap tomorrow and the advice
 > changes. The flood panel uses the same three-day window: 24-hour rain,
@@ -37,10 +40,17 @@
 >
 > The live field is CAMS. NASA MERRA-2 anchors the climatology and the seasonal
 > baseline — and we show its 77-day lag instead of hiding it. AERONET Ilorin
-> gives us an independent check: r equals 0.865 over 30 days. The scatter plot
-> and the caveat are on the page."
+> gives us an independent check on MERRA-2: r equals 0.865 over 30 days. The
+> scatter plot and the caveat are on the page.
+>
+> On the 605 real days, the five dustiest all score High or Severe and the five
+> cleanest all score Low. When we hide a season from the thresholds, clean days
+> stay clean 65 out of 65 times; dusty days reach High or Severe 24 of 65 times.
+> That is modest, and we say so. Changing every weight by ten percent moves no
+> levels at all."
 
-*Open the NASA tab, then the evidence chart.*
+*Open the NASA tab, then the evidence chart. If asked for a severe state, open
+the historical replay.*
 
 ## 2:00–2:35 — The ground node
 
@@ -74,8 +84,10 @@
 | --- | --- |
 | "Why not just use NASA data live?" | NASA aerosol products lag ~77 days and need Earthdata. CAMS is the operational live field; NASA anchors the climatology and validation. We label the lag. |
 | "Is this AI?" | No. It is a weighted percentile index with guardrails. That is a feature: every number is auditable. |
-| "How accurate is it?" | AERONET Ilorin r = 0.865, n = 30, bias +0.163 AOD. Regional, not a Gombe station. The ground node is how we close that gap. |
+| "How accurate is it?" | The AERONET check is r = 0.865, n = 30, bias +0.163 AOD — that validates MERRA-2, not the forecast. On observed days, clean-decile recall is 65/65; dusty-decile recall is 24/65 at High/Severe. The ground node is how we close that gap. |
+| "That recall is low." | Yes. Moderate is the honest watch band in the late harmattan, and the advice copy treats it that way. We would rather miss a Moderate than cry Severe on a clear day. |
+| "Why show old days?" | Because a November demo has no dust storm. The replay uses real February 2024 and August 2024 days, scored with today's model, and labels them **Not a forecast**. |
 | "Does it send real messages?" | Not in the prototype. The WhatsApp/SMS button opens the user's own app with the text. Delivery needs a provider and consent. |
 | "Hausa quality?" | Written by a non-native speaker, flagged in the UI and docs, with a review sheet for a native speaker. We would not launch without that review. |
 | "Flood accuracy?" | It is a rainfall-threshold early warning, not a hydrological model. Hard floors are conservative; the score and rain totals are shown. |
-| "What is new?" | The combination: local dust + flood in one window, bilingual share-ready messages, NASA evidence, and a cheap ground node — all offline-tolerant. |
+| "What is new?" | The combination: local dust + flood in one window, bilingual share-ready messages, NASA evidence, and a cheap ground node — all offline-tolerant, with the validation limits stated. |

@@ -106,12 +106,15 @@ export default function SubscribeForm({
           </div>
         ) : null}
 
-        <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-[10px] text-sand-400">
-          <span>
-            <span className="tabular text-sm font-semibold text-sand-50">{stats.total}</span>{" "}
-            {t.subscribers}
-          </span>
-          <span>{lang === "ha" ? "Ba a aika saƙo a gwajin nan" : "No messages sent in this prototype"}</span>
+        <div className="mt-4 border-t border-white/10 pt-3 text-[10px] text-sand-400">
+          <div className="flex items-center justify-between">
+            <span>
+              <span className="tabular text-sm font-semibold text-sand-50">{stats.total}</span>{" "}
+              {t.subscribers}
+            </span>
+            <span>{lang === "ha" ? "Na gwaji" : "Prototype"}</span>
+          </div>
+          <p className="mt-1 text-[10px] leading-relaxed text-sand-400/80">{t.privacyNote}</p>
         </div>
       </div>
     </section>

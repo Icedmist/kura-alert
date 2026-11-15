@@ -2,6 +2,7 @@ import type {
   Evidence,
   Forecast,
   MapData,
+  ReplayData,
   SensorLatest,
   SubscriberStats,
   Validation,
@@ -12,6 +13,7 @@ import evidenceFallback from "./fallback/evidence.json";
 import validationFallback from "./fallback/validation.json";
 import mapFallback from "./fallback/map.json";
 import statsFallback from "./fallback/stats.json";
+import replayFallback from "./fallback/replay.json";
 
 const API_BASE = process.env.KURA_API_URL ?? "http://127.0.0.1:8000";
 const TIMEOUT_MS = Number(process.env.KURA_FETCH_TIMEOUT ?? 15000);
@@ -39,13 +41,14 @@ const EMPTY_SENSORS: SensorLatest = {
 };
 
 export async function getDashboardData() {
-  const [forecast, evidence, validation, map, sensors, stats] = await Promise.all([
+  const [forecast, evidence, validation, map, sensors, stats, replay] = await Promise.all([
     fetchJson<Forecast>("/api/v1/forecast", forecastFallback as unknown as Forecast),
     fetchJson<Evidence>("/api/v1/evidence", evidenceFallback as unknown as Evidence),
     fetchJson<Validation>("/api/v1/validation", validationFallback as unknown as Validation),
     fetchJson<MapData>("/api/v1/map", mapFallback as unknown as MapData),
     fetchJson<SensorLatest>("/api/v1/sensors/latest", EMPTY_SENSORS),
     fetchJson<SubscriberStats>("/api/v1/stats", statsFallback as unknown as SubscriberStats),
+    fetchJson<ReplayData>("/api/v1/replay", replayFallback as unknown as ReplayData),
   ]);
 
   return {
@@ -55,6 +58,7 @@ export async function getDashboardData() {
     map: map.data,
     sensors: sensors.data,
     stats: stats.data,
+    replay: replay.data,
     degraded: !forecast.live,
   };
 }
